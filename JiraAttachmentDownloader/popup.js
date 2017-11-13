@@ -1,6 +1,6 @@
 /*! 
  *  \brief     JIRA Attachment Downloader
- *  \details   This Chrome extension allows the user to download all attachments of a JIRA ticket with one click.
+ *  \details   This extension allows the user to download all attachments of a JIRA ticket with one click.
  *  \author    Thomas Irgang
  *  \version   1.0
  *  \date      2017
@@ -16,6 +16,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 /*!
 This code is based on the samples from https://developer.chrome.com/extensions/samples. Especially code snippets from the download examples is reused.
 */
+var api = chrome;
 
 /*! All links contained in the website. */
 var allLinks = [];
@@ -70,7 +71,7 @@ function toggleAll() {
 
 /*! Get file name from URL. */
 function getFile(url) {
-    return url.substring(url.lastIndexOf('/')+1);
+    return decodeURI(url.substring(url.lastIndexOf('/')+1));
 }
 
 /*! Download all visible checked links. */
@@ -86,7 +87,7 @@ function downloadCheckedLinks() {
             file = path + file;
             console.log("Download " + file);
             downloads = downloads + 1;
-            chrome.downloads.download({
+            api.downloads.download({
                     url: visibleLinks[i],
                     filename: file
                 }, downloadFinished);
@@ -96,11 +97,10 @@ function downloadCheckedLinks() {
 
 /*! Callback for finished downloads. */
 function downloadFinished(id) {
-    console.log("Download " + id + " finished.");
+    console.log("Download " + id + " started.");
     downloads = downloads - 1;
     if(downloads == 0) {
-        console.log("All downloads finished.");
-        alert("All downloads finished.");
+        console.log("All downloads started.");
         window.close();   
     }
 }
@@ -160,9 +160,12 @@ function filterLinks() {
 
 /*! Extract domain from URL. */
 function getDomain(url) {
-    var url_parts = url.split("/");
-    var domain = url_parts[2];
-    return domain;
+    if(url) {
+        var url_parts = url.split("/");
+        var domain = url_parts[2];
+        return domain;
+    }
+    return "";
 }
 
 /*! Extract ticket ID from URL. */
@@ -183,8 +186,8 @@ function getSavePath(ticket) {
 /*! Get last used filter for external download links. */
 function getExternalFilter(url, callback) {
     var domain = getDomain(url);
-    chrome.storage.sync.get(domain, (items) => {
-        callback(chrome.runtime.lastError ? null : items[domain]);
+    api.storage.sync.get(domain, (items) => {
+        callback(api.runtime.lastError ? null : items[domain]);
     });
 }
 
@@ -194,7 +197,7 @@ function saveExternalFilter(url) {
     var external = document.getElementById('external').value;
     var items = {};
     items[domain] = external;
-    chrome.storage.sync.set(items);
+    api.storage.sync.set(items);
 }
 
 /*! Get URL of current tab. */
@@ -204,11 +207,21 @@ function getCurrentTabUrl(callback) {
         currentWindow: true
     };
 
-    chrome.tabs.query(queryInfo, (tabs) => {
-        var tab = tabs[0];
-        var url = tab.url;
-        console.assert(typeof url == 'string', 'tab.url should be a string');
-        callback(url);
+    api.tabs.query(queryInfo, (tabs) => {
+        if(tabs) {
+            var tab = tabs[0];
+            if(tab) {
+                var url = tab.url;
+                console.log("Tab: " + tab);
+                console.log("URL: " + url);
+                if(url) {
+                    callback(url);    
+                }                
+            } else {
+                console.warn("No tab found!");
+                console.warn(tabs);
+            }
+        }
     });
 }
 
@@ -217,7 +230,9 @@ function updateExternal() {
     filterLinks();
 
     getCurrentTabUrl((url) => {
-        saveExternalFilter(url);
+        if(url) {
+            saveExternalFilter(url);   
+        }
     });
 }
 
@@ -234,14 +249,19 @@ function updateTabUrl(url) {
 }
 
 /*! Callback for link extraction script. */
-chrome.extension.onRequest.addListener(function(links) {
-    for (var index in links) {
-        allLinks.push(links[index]);
+api.runtime.onMessage.addListener(function(msg) {
+    if(msg) {
+        if(msg.kind == "links") {
+            var links = msg.data;
+            for (var index in links) {
+                allLinks.push(links[index]);
+            }
+            allLinks.sort();
+            visibleLinks = allLinks;
+            filterLinks();
+            showLinks();
+        }
     }
-    allLinks.sort();
-    visibleLinks = allLinks;
-    filterLinks();
-    showLinks();
 });
 
 /*! Init popup. */
@@ -260,13 +280,13 @@ window.onload = function() {
             updateTabUrl(url);
         });
         // inject link extraction script in all frames of current tab
-        chrome.windows.getCurrent(function (currentWindow) {
-            chrome.tabs.query({
+        api.windows.getCurrent(function (currentWindow) {
+            api.tabs.query({
                     active: true, 
                     windowId: currentWindow.id
                 },
                 function(activeTabs) {
-                    chrome.tabs.executeScript(
+                    api.tabs.executeScript(
                         activeTabs[0].id, {file: 'send_links.js', allFrames: true});
                 });
         });

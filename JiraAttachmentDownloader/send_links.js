@@ -1,6 +1,6 @@
 /*! 
  *  \brief     JIRA Attachment Downloader
- *  \details   This Chrome extension allows the user to download all attachments of a JIRA ticket with one click.
+ *  \details   This extension allows the user to download all attachments of a JIRA ticket with one click.
  *  \author    Thomas Irgang
  *  \version   1.0
  *  \date      2017
@@ -16,6 +16,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 /*!
 This code is based on the samples from https://developer.chrome.com/extensions/samples. Especially code snippets from the download examples is reused.
 */
+var api = chrome;
 
 /*! List of found links. */
 var links = [].slice.apply(document.getElementsByTagName('a'));
@@ -43,5 +44,8 @@ for (var i = 0; i < links.length;) {
     }
 }
 
-// Send links to the extension.
-chrome.extension.sendRequest(links);
+if(links) {
+    // Send links to the extension.
+    api.runtime.sendMessage({kind: "links", data: links});
+}
+
