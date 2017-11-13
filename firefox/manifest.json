@@ -7,7 +7,7 @@
   
     "author": "Thomas Irgang",
     
-    "version": "1.3",
+    "version": "1.4",
     
     "browser_action": {
         "browser_style": true,

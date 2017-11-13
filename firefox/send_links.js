@@ -24,11 +24,15 @@ var links = [].slice.apply(document.getElementsByTagName('a'));
 // Get links
 links = links.map(function(element) {
     var href = element.href;
-    var hashIndex = href.indexOf('#');
-    if (hashIndex >= 0) {
-        href = href.substr(0, hashIndex);
+    if(href) {
+        var hashIndex = href.indexOf('#');
+        if (hashIndex >= 0) {
+            href = href.substr(0, hashIndex);
+        }
+        return href;
     }
-    return href;
+    //remove invalid urls in next step
+    return "javascript";
 });
 
 links.sort();

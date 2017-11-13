@@ -16,7 +16,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 /*!
 This code is based on the samples from https://developer.chrome.com/extensions/samples. Especially code snippets from the download examples is reused.
 */
-var api = chrome;
+var api = browser;
 
 /*! List of found links. */
 var links = [].slice.apply(document.getElementsByTagName('a'));
@@ -24,11 +24,15 @@ var links = [].slice.apply(document.getElementsByTagName('a'));
 // Get links
 links = links.map(function(element) {
     var href = element.href;
-    var hashIndex = href.indexOf('#');
-    if (hashIndex >= 0) {
-        href = href.substr(0, hashIndex);
+    if(href) {
+        var hashIndex = href.indexOf('#');
+        if (hashIndex >= 0) {
+            href = href.substr(0, hashIndex);
+        }
+        return href;
     }
-    return href;
+    //remove invalid urls in next step
+    return "javascript";
 });
 
 links.sort();
