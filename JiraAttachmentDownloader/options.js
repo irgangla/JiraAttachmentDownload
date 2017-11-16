@@ -16,12 +16,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 /*!
 This code is based on the samples from https://developer.chrome.com/extensions/samples. Especially code snippets from the download examples is reused.
 */
-var api = browser;
+var api = chrome;
 
 /*! Load file name pattern form browser data store. */
 function loadNamePattern() {
+    console.log("Load name pattern form store.");
     api.storage.sync.get("name_pattern", (value) => {
-        var pattern = api.runtime.lastError ? 0 : value;
+        var pattern = api.runtime.lastError ? 0 : value["name_pattern"];
+        console.log("Pattern: " + pattern);
         for (var i = 0; i < 3; i++) {
             var id = "pattern_" + i;
             document.getElementById(id).selected = (i == pattern);
