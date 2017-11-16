@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="utf-8"/>
+    <script src='options.js'></script>
+    <title>JIRA Attachment Downloader - Settings</title>
+  </head>
+  <body>
+    <div>
+      <table>
+        <tr>
+          <td><div style="vertical-align: middle; text-align: center; padding: 10px;"><img src="icon.png"></div></td>
+          <td><div style="vertical-align: middle; text-align: center; padding: 10px;"><h1>JIRA Attachment Downloader - Settings</h1></div></td>
+        </tr>
+      </table>
+    </div>
+    <div>
+      <table>
+        <tr>
+          <td style="padding: 5px;">Name pattern:</td>
+          <td> 
+            <select id=pattern>
+                <option value=0 id=pattern_0>[Project]\[Ticket ID]\[File]</option>
+                <option value=1 id=pattern_1>[Project]\[Ticket ID]-[Summary]\[File]</option>
+                <option value=2 id=pattern_2>[Ticket]_[File]</option>
+            </select>
+          </td>
+          <td>
+             <button id=save>Save</button> 
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

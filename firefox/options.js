@@ -18,55 +18,40 @@ This code is based on the samples from https://developer.chrome.com/extensions/s
 */
 var api = browser;
 
-/*! List of found links. */
-var links = [].slice.apply(document.getElementsByTagName('a'));
 
-// Get links
-links = links.map(function(element) {
-    var href = element.href;
-    if(href) {
-        var hashIndex = href.indexOf('#');
-        if (hashIndex >= 0) {
-            href = href.substr(0, hashIndex);
+function loadNamePattern() {
+    api.storage.sync.get("name_pattern", (value) => {
+        var pattern = api.runtime.lastError ? 0 : value;
+        for(var i=0; i<3; i++) {
+            var id = "pattern_" + i;
+            document.getElementById(id).selected = (i == pattern);
         }
-        return href;
-    }
-    //remove invalid urls in next step
-    return "javascript";
-});
-
-links.sort();
-
-// Remove duplicates and invalid URLs.
-var kBadPrefix = 'javascript';
-for (var i = 0; i < links.length;) {
-    if (((i > 0) && (links[i] == links[i - 1])) || (links[i] == '') || (kBadPrefix == links[i].toLowerCase().substr(0, kBadPrefix.length))) {
-        links.splice(i, 1);
-    } 
-    else {
-        ++i;
-    }
+    });
 }
 
-if(links) {
-    // Send links to the extension.
-    api.runtime.sendMessage({kind: "links", data: links});
+function saveNamePattern() {
+    var pattern = document.getElementById("pattern").value
+    api.storage.sync.set({"name_pattern": pattern});
+    api.runtime.sendMessage({"pattern": pattern});
+    console.log("New name pattern: " + pattern);
+    
 }
 
-console.log("links extracted");
-
-var keys = [].slice.apply(document.getElementById('key-val'));
-console.log(keys);
-if(keys && keys.length > 0) {
-    // Send links to the extension.
-    api.runtime.sendMessage({kind: "key", data: keys[0].innerText});
+/*! Save filter for external download links. */
+function saveExternalFilter(url) {
+    var domain = getDomain(url);
+    var external = document.getElementById('external').value;
+    var items = {};
+    items[domain] = external;
+    api.storage.sync.set(items);
 }
 
-var summaries = [].slice.apply(document.getElementById('summary-val'));
-console.log(summaries);
-if(summaries && summaries.length > 0) {
-    // Send links to the extension.
-    api.runtime.sendMessage({kind: "summary", data: summaries[0].innerText});
-}
+function setup() {
+    // register form callbacks
+    document.getElementById('save').onclick = saveNamePattern;
+    
+    loadNamePattern();
+};
 
-
+/*! Init popup. */
+window.onload = setup;

@@ -7,7 +7,7 @@
   
     "author": "Thomas Irgang",
     
-    "version": "1.4",
+    "version": "1.5",
     
     "browser_action": {
         "browser_style": true,
@@ -15,10 +15,19 @@
         "default_icon": "icon.png"
     },
     
+    "background": {
+        "scripts": ["background.js"]
+    },
+    
+    "options_ui": {
+        "page": "options.html"
+    },
+    
     "permissions": [
+        "<all_urls>",
         "downloads", 
-        "<all_urls>", 
         "storage",
-        "tabs"
+        "tabs",
+        "activeTab"
     ]
 }

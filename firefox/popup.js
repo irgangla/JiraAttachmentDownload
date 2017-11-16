@@ -2,7 +2,7 @@
  *  \brief     JIRA Attachment Downloader
  *  \details   This extension allows the user to download all attachments of a JIRA ticket with one click.
  *  \author    Thomas Irgang
- *  \version   1.0
+ *  \version   1.5
  *  \date      2017
  *  \copyright MIT License
  Copyright 2017 Thomas Irgang
@@ -22,8 +22,14 @@ var api = browser;
 var allLinks = [];
 /*! All links displayed as download options. */
 var visibleLinks = [];
-/*! Number of running downloads. */
+/*! Number of triggered downloads. */
 var downloads = 0;
+/*! JIRA ticket key */
+var key = "";
+/*! JIRA ticket summary */
+var summary = "";
+/*! current domain */
+var domain = "";
 
 /*!
 Update popup to show all visible links.
@@ -74,33 +80,27 @@ function getFile(url) {
     return decodeURI(url.substring(url.lastIndexOf('/')+1));
 }
 
-/*! Download all visible checked links. */
+/*! Trigger download all visible checked links. */
 function downloadCheckedLinks() {
-    var ticket = document.getElementById('ticket').value;
-    var path = "attachments";
-    if(ticket) {
-        path = getSavePath(ticket);
-    }
     for (var i = 0; i < visibleLinks.length; ++i) {
         if (document.getElementById('check' + i).checked) {
-            var file = getFile(visibleLinks[i]);
-            file = path + file;
-            console.log("Download " + file);
+            api.runtime.sendMessage({
+                "url": visibleLinks[i],
+                "domain": domain,
+                "ticket": ticket,
+                "summary": summary
+            });
             downloads = downloads + 1;
-            api.downloads.download({
-                    url: visibleLinks[i],
-                    filename: file
-                }, downloadFinished);
         }
     }
 }
 
-/*! Callback for finished downloads. */
-function downloadFinished(id) {
-    console.log("Download " + id + " started.");
+/*! Callback for started downloads. */
+function downloadStarted() {
     downloads = downloads - 1;
     if(downloads == 0) {
         console.log("All downloads started.");
+        //do not hide window before, else downloads are lost!
         window.close();   
     }
 }
@@ -168,21 +168,6 @@ function getDomain(url) {
     return "";
 }
 
-/*! Extract ticket ID from URL. */
-function getTicket(url) {
-    var url_parts = url.split("/");
-    var last = url_parts[url_parts.length - 1];
-    var last_parts = last.split("?");
-    var ticket = last_parts[0];
-    return ticket;
-}
-
-/*! Generate subfolder path from ticket ID. */
-function getSavePath(ticket) {
-    var ticket_parts = ticket.split("-");
-    return ticket_parts[0] + "/" + ticket_parts[1] + "/";
-}
-
 /*! Get last used filter for external download links. */
 function getExternalFilter(url, callback) {
     var domain = getDomain(url);
@@ -211,8 +196,8 @@ function getCurrentTabUrl(callback) {
         if(tabs) {
             var tab = tabs[0];
             if(tab) {
+                console.log("Tab: " + JSON.stringify(tab));
                 var url = tab.url;
-                console.log("Tab: " + tab);
                 console.log("URL: " + url);
                 if(url) {
                     callback(url);    
@@ -238,12 +223,16 @@ function updateExternal() {
 
 /*! Update popup info with current tab URL. */
 function updateTabUrl(url) {
-    document.getElementById('domain').value = getDomain(url);
-    document.getElementById('ticket').value = getTicket(url);
+    domain = getDomain(url);
+    if(document.getElementById('domain')) {
+        document.getElementById('domain').value = domain;
+    }
 
     getExternalFilter(url, (external) => {
         if(external) {
-            document.getElementById('external').value = external;
+            if(document.getElementById('external')) {
+                document.getElementById('external').value = external;
+            }
         }
     });
 }
@@ -261,18 +250,44 @@ api.runtime.onMessage.addListener(function(msg) {
             filterLinks();
             showLinks();
         }
+        if(msg.kind == "key") {
+            key = msg.key;
+            document.getElementById('ticket').value = key;
+        }
+        if(msg.kind == "summary") {
+            summary = msg.summary;
+            document.getElementById('summary').value = summary;
+        }
+        if(msg.kind == "dl_ok") {
+            downloadStarted();
+        }
+        if(msg.kind == "dl_err") {
+            downloadStarted();
+        }
     }
 });
 
 /*! Init popup. */
 window.onload = function() {
     // register form callbacks
-    document.getElementById('external').onkeyup = updateExternal;
-    document.getElementById('filter').onkeyup = filterLinks;
-    document.getElementById('regex').onchange = filterLinks;
-    document.getElementById('toggle_all').onchange = toggleAll;
-    document.getElementById('download0').onclick = downloadCheckedLinks;
-    document.getElementById('download1').onclick = downloadCheckedLinks;
+    if(document.getElementById('external')) {
+        document.getElementById('external').onkeyup = updateExternal;
+    }
+    if(document.getElementById('filter')) {
+        document.getElementById('filter').onkeyup = filterLinks;
+    }
+    if(document.getElementById('regex')) {
+        document.getElementById('regex').onchange = filterLinks;
+    }
+    if(document.getElementById('toggle_all')) {
+        document.getElementById('toggle_all').onchange = toggleAll;
+    }
+    if(document.getElementById('download0')) {
+        document.getElementById('download0').onchange = downloadCheckedLinks;
+    }
+    if(document.getElementById('download1')) {
+        document.getElementById('download1').onchange = downloadCheckedLinks;
+    }
     
     setTimeout(function(){
         // get current tab URL
