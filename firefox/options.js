@@ -16,64 +16,40 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 /*!
 This code is based on the samples from https://developer.chrome.com/extensions/samples. Especially code snippets from the download examples is reused.
 */
-var api = chrome;
+var api = browser;
 
-/*! List of found links. */
-var links = [].slice.apply(document.getElementsByTagName('a'));
-
-// Get links
-links = links.map(function (element) {
-    var href = element.href;
-    if (href) {
-        var hashIndex = href.indexOf('#');
-        if (hashIndex >= 0) {
-            href = href.substr(0, hashIndex);
+/*! Load file name pattern form browser data store. */
+function loadNamePattern() {
+    api.storage.sync.get("name_pattern", (value) => {
+        var pattern = api.runtime.lastError ? 0 : value;
+        for (var i = 0; i < 3; i++) {
+            var id = "pattern_" + i;
+            document.getElementById(id).selected = (i == pattern);
         }
-        return href;
-    }
-    //remove invalid urls in next step
-    return "javascript";
-});
-
-links.sort();
-
-// Remove duplicates and invalid URLs.
-var kBadPrefix = 'javascript';
-for (var i = 0; i < links.length;) {
-    if (((i > 0) && (links[i] == links[i - 1])) || (links[i] == '') || (kBadPrefix == links[i].toLowerCase().substr(0, kBadPrefix.length))) {
-        links.splice(i, 1);
-    } else {
-        ++i;
-    }
-}
-
-if (links) {
-    // Send links to the extension.
-    api.runtime.sendMessage({
-        kind: "links",
-        data: links
     });
 }
 
-//get ticket key
-var keyElement = document.getElementById("key-val");
-if (keyElement) {
-    var ticket_key = keyElement.textContent;
-    console.log("Ticket key: " + ticket_key);
-    api.runtime.sendMessage({
-        "kind": "key",
-        "data": ticket_key
+/*! Save file name pattern to browser data store. */
+function saveNamePattern() {
+    var pattern = document.getElementById("pattern").value
+    api.storage.sync.set({
+        "name_pattern": pattern
     });
+    api.runtime.sendMessage({
+        "kind": "pattern",
+        "pattern": pattern
+    });
+    console.log("New name pattern: " + pattern);
+
 }
 
-//get ticket summary
-var summaryElement = document.getElementById("summary-val");
-if (summaryElement) {
-    var ticket_summary = summaryElement.textContent;
-    console.log("Ticket summary: " + ticket_summary);
-    api.runtime.sendMessage({
-        "kind": "summary",
-        "data": ticket_summary
-    });
-}
+/*! Setup options page. */
+function setup() {
+    // register form callbacks
+    document.getElementById('save').onclick = saveNamePattern;
 
+    loadNamePattern();
+};
+
+/*! Init popup. */
+window.onload = setup;
