@@ -119,13 +119,16 @@ function downloadStarted(success, index) {
 }
 
 /*! Callback for finished downloads. */
-function downloadDone(url) {
+function downloadDone(url, id) {
     var index = indexForUrl(url);
     if (index >= 0) {
         downloads_running = downloads_running - 1;
 
         if (downloads_running == 0) {
             console.log("All downloads finished.");
+            if (id) {
+                api.downloads.show(id);
+            }
             window.close();
         }
 
@@ -313,7 +316,7 @@ api.runtime.onMessage.addListener(function (msg) {
             downloadStarted(false, msg["nr"]);
         } else if (msg.kind == "dl_succ") {
             console.log("Message: dl_succ");
-            downloadDone(msg["url"]);
+            downloadDone(msg["url"], msg["id"]);
         }
     }
 });

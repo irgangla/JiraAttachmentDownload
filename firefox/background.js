@@ -120,9 +120,11 @@ function downloadFinished(items) {
     if (items && items.length > 0) {
         var item = items[0];
         var url = items[0].url;
+        var id = items[0].id;
         api.runtime.sendMessage({
             "kind": "dl_succ",
-            "url": url
+            "url": url,
+            "id": id
         });
         console.log(url + " was downloaded as " + items[0].filename);
     }
