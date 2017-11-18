@@ -2,7 +2,7 @@
  *  \brief     JIRA Attachment Downloader
  *  \details   This extension allows the user to download all attachments of a JIRA ticket with one click.
  *  \author    Thomas Irgang
- *  \version   1.6
+ *  \version   1.7
  *  \date      2017
  *  \copyright MIT License
  Copyright 2017 Thomas Irgang
